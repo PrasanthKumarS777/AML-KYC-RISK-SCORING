@@ -22,3 +22,7 @@ RISK_LABELS = {
     "HIGH": "High Risk",
     "CRITICAL": "Critical Risk"
 }
+# Model versioning
+MODEL_VERSION     = "1.0.0"
+MODEL_DESCRIPTION = "XGBoost multiclass AML risk classifier - 4 tiers"
+TRAINED_ON        = "2026-04-01"
