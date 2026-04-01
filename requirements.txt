@@ -1,0 +1,34 @@
+# Data & ML Core
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.4.2
+xgboost==2.0.3
+imbalanced-learn==0.12.3
+
+# Anomaly Detection
+pyod==1.1.3
+
+# Explainability
+shap==0.45.1
+
+# API Backend
+fastapi==0.111.0
+uvicorn==0.29.0
+pydantic==2.7.1
+
+# Data Generation (Synthetic)
+faker==25.2.0
+
+# Visualization & Dashboard
+streamlit==1.35.0
+plotly==5.22.0
+
+# Database
+sqlalchemy==2.0.30
+
+# Utilities
+python-dotenv==1.0.1
+loguru==0.7.2
+
+# Testing
+pytest==8.2.0

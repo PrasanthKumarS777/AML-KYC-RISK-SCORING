@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+venv/
+env/
+.env
+.venv/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Data files (raw data should not be pushed)
+data/raw/
+data/processed/
+*.csv
+*.xlsx
+*.parquet
+*.pkl
+*.joblib
+
+# Model artifacts
+*.h5
+*.pt
+*.bin
+models/saved/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Environment variables
+.env
+*.env
