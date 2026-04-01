@@ -45,7 +45,7 @@ def explain_customer(customer_row: pd.Series, model, scaler, le) -> dict:
     """
     Returns a structured explanation for a single customer.
     """
-    X = customer_row[FEATURE_COLS].values.reshape(1, -1)
+    X = pd.DataFrame([customer_row[FEATURE_COLS].values], columns=FEATURE_COLS)
     X_scaled = scaler.transform(X)
 
     pred_class_idx = model.predict(X_scaled)[0]
@@ -56,40 +56,47 @@ def explain_customer(customer_row: pd.Series, model, scaler, le) -> dict:
     explainer   = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X_scaled)
 
-    # For multiclass: shap_values is list of arrays (one per class)
-    if isinstance(shap_values, list):
-        class_shap = shap_values[pred_class_idx][0]
+    # XGBoost multiclass returns 3D array: (n_samples, n_features, n_classes)
+    # or list of 2D arrays depending on version — handle both
+    if isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
+        # shape: (1, n_features, n_classes) → pick predicted class
+        class_shap = shap_values[0, :, pred_class_idx]
+    elif isinstance(shap_values, list):
+        # list of (n_samples, n_features) arrays — one per class
+        class_shap = np.array(shap_values[pred_class_idx][0])
     else:
-        class_shap = shap_values[0]
+        # binary or flat array
+        class_shap = np.array(shap_values[0])
+
+    class_shap = class_shap.flatten()
 
     feature_impacts = []
     for i, feat in enumerate(FEATURE_COLS):
         feature_impacts.append({
-            "feature":      feat,
-            "label":        FEATURE_LABELS[feat],
-            "value":        round(float(customer_row[feat]), 2),
-            "shap_value":   round(float(class_shap[i]), 4),
-            "direction":    "increases_risk" if class_shap[i] > 0 else "decreases_risk"
+            "feature":    feat,
+            "label":      FEATURE_LABELS[feat],
+            "value":      round(float(customer_row[feat]), 2),
+            "shap_value": round(float(class_shap[i]), 4),
+            "direction":  "increases_risk" if class_shap[i] > 0 else "decreases_risk"
         })
 
     feature_impacts.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
     top_drivers = feature_impacts[:5]
 
-    # Build human-readable reason
     reasons = []
     for driver in top_drivers:
         if driver["direction"] == "increases_risk":
             reasons.append(f"{driver['label']} (impact: +{abs(driver['shap_value'])})")
 
     explanation = {
-        "customer_id":        customer_row.get("customer_id", "N/A"),
-        "name":               customer_row.get("name", "N/A"),
-        "predicted_tier":     pred_label,
-        "confidence_pct":     confidence,
-        "composite_score":    round(float(customer_row.get("composite_risk_score", 0)), 2),
-        "top_risk_drivers":   top_drivers,
-        "risk_reasons":       reasons,
-        "all_class_proba":    {
+        "customer_id":      customer_row.get("customer_id", "N/A"),
+        "name":             customer_row.get("name", "N/A"),
+        "predicted_tier":   pred_label,
+        "confidence_pct":   confidence,
+        "composite_score":  round(float(customer_row.get("composite_risk_score", 0)), 2),
+        "top_risk_drivers": top_drivers,
+        "risk_reasons":     reasons,
+        "all_class_proba":  {
             le.inverse_transform([i])[0]: round(float(p) * 100, 2)
             for i, p in enumerate(pred_proba)
         }
