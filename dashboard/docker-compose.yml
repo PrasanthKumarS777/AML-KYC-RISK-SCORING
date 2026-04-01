@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+
+  # ── FastAPI Backend ──────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aml_kyc_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./src/models/saved:/app/src/models/saved
+    environment:
+      - APP_NAME=AML-KYC-Risk-Scoring
+      - APP_VERSION=1.0.0
+      - DEBUG=False
+      - DATABASE_URL=sqlite:///./aml_kyc.db
+      - LOW_RISK_THRESHOLD=30
+      - MEDIUM_RISK_THRESHOLD=55
+      - HIGH_RISK_THRESHOLD=75
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # ── Streamlit Dashboard ──────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: aml_kyc_dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api:8000/api/v1
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  data:
+  logs:
